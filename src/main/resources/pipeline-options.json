@@ -1,0 +1,9 @@
+{
+  "project": "eighth-saga-474816-a6",
+  "inputGcsBucket": "gs://text-etl-input-bucket",
+  "outputGcsBucket": "gs://csv-etl-output-bucket",
+  "runner": "DataflowRunner",
+  "region": "us-central1",
+  "tempLocation": "gs://dataflow-bucket-quickstart/etl-dataflow/temp",
+  "stagingLocation": "gs://dataflow-bucket-quickstart/etl-dataflow/staging"
+}

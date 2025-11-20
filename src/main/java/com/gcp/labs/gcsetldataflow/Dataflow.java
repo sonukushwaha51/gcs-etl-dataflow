@@ -8,6 +8,15 @@ import com.google.inject.Injector;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionList;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTagList;
+
+import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.FAILURE_TAG;
+import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.SUCCESS_TAG;
 
 public class Dataflow {
 
@@ -18,15 +27,34 @@ public class Dataflow {
         GCSDataflowPipelineOptions pipelineOptions = PipelineOptionsFactory.fromArgs(args).withValidation().as(GCSDataflowPipelineOptions.class);
 
         String inputGcsBucket = pipelineOptions.getInputGcsBucket();
-        String outputGcsBucket = pipelineOptions.getOutputGcsBucket();
+        String outputGcsBucketSuccess = pipelineOptions.getOutputGcsBucketSuccess();
+        String outputGcsBucketFailure = pipelineOptions.getOutputGcsBucketFailure();
 
         Pipeline pipeline = Pipeline.create(pipelineOptions);
 
         // Add your pipeline transformations here using inputGcsBucket and outputGcsBucket
-        pipeline
-                .apply("Read from GCS", TextIO.read().from(inputGcsBucket))
-                .apply("Process Text Data", injector.getInstance(RemoveWhiteSpaceDoFn.class))
-                .apply("Count element", injector.getInstance(CountElementsDoFn.class))
-                .apply("Write to GCS", TextIO.write().to(outputGcsBucket));
+
+        PCollection<String> pCollection = pipeline
+                .apply("Read from GCS", TextIO.read().from(inputGcsBucket));
+
+        PCollectionTuple tuple = pCollection
+                .apply("Process Text Data", ParDo.of(injector.getInstance(RemoveWhiteSpaceDoFn.class)).withOutputTags(SUCCESS_TAG, TupleTagList.of(FAILURE_TAG)));
+
+        PCollection<String> removeWhiteSpaceSuccess = tuple.get(SUCCESS_TAG);
+        PCollection<String> removeWhiteSpaceFailure = tuple.get(FAILURE_TAG);
+
+        PCollectionTuple countProcessTuple = removeWhiteSpaceSuccess
+                .apply("Count element", ParDo.of(injector.getInstance(CountElementsDoFn.class)).withOutputTags(SUCCESS_TAG, TupleTagList.of(FAILURE_TAG)));
+
+        countProcessTuple.get(SUCCESS_TAG)
+                .apply("Write to GCS", TextIO.write().to(outputGcsBucketSuccess));
+
+        PCollection<String> failureProcess = PCollectionList.of(removeWhiteSpaceFailure).and(countProcessTuple.get(FAILURE_TAG))
+                        .apply("FLatten error", Flatten.pCollections());
+
+        failureProcess
+                .apply("Write to failure folder", TextIO.write().to(outputGcsBucketFailure));
+
+        pipeline.run();
     }
 }

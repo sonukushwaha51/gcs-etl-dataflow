@@ -12,8 +12,13 @@ public interface GCSDataflowPipelineOptions extends PipelineOptions, DataflowPip
     void setInputGcsBucket(String inputGcsBucket);
 
     @Validation.Required
-    String getOutputGcsBucket();
+    String getOutputGcsBucketSuccess();
 
-    void setOutputGcsBucket(String outputGcsBucket);
+    void setOutputGcsBucketSuccess(String outputGcsBucketSuccess);
+
+    @Validation.Required
+    String getOutputGcsBucketFailure();
+
+    void setOutputGcsBucketFailure(String outputGcsBucketFailure);
 
 }

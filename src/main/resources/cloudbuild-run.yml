@@ -24,7 +24,7 @@ steps:
       - '-c'
       - |
         VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-        echo $VERSION > /workspace/version.txt
+        echo $VERSION > /workspace/versions.txt
 
   - name: google/cloud-sdk:alpine
     entrypoint: 'bash'

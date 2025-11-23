@@ -26,7 +26,7 @@ steps:
       - '-c'
       - |
         VERSION=$(cat /workspace/versions.txt)
-        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$VERSION .
+        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION} .
 
   # Step 4: Push latest image
   - name: 'gcr.io/cloud-builders/docker'
@@ -45,7 +45,7 @@ steps:
       - '-c'
       - |
         VERSION=$(cat /workspace/versions.txt)
-        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$VERSION
+        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION}
 
   # Step 6: Build flex template for latest
   - name: 'gcr.io/cloud-builders/gcloud'

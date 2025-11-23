@@ -23,7 +23,7 @@ steps:
       - '-c'
       - |
         VERSION=$(cat /workspace/versions.txt)
-        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION} .
+        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$VERSION .
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push latest image'
@@ -41,7 +41,7 @@ steps:
       - '-c'
       - |
         VERSION=$(cat /workspace/versions.txt)
-        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION}
+        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$VERSION
 
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
@@ -60,7 +60,7 @@ steps:
       - 'flex-template'
       - 'build'
       - 'gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-${VERSION}.json'
-      - '--image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION}'
+      - '--image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$VERSION'
       - '--sdk-language=JAVA'
 
   - name: 'gcr.io/cloud-builders/gcloud'

@@ -59,7 +59,7 @@ steps:
       - 'dataflow'
       - 'flex-template'
       - 'build'
-      - 'gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-${VERSION}.json'
+      - 'gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-$VERSION.json'
       - '--image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$VERSION'
       - '--sdk-language=JAVA'
 

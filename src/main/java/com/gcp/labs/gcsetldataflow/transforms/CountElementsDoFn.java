@@ -3,15 +3,19 @@ package com.gcp.labs.gcsetldataflow.transforms;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 
-public class CountElementsDoFn extends DoFn<String, String> {
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.OUTPUT_SUCCESS_TAG;
+
+public class CountElementsDoFn extends DoFn<String, Map<String, Long>> {
 
     @ProcessElement
-    public void processElement(DoFn<String, String>.ProcessContext context, BoundedWindow boundedWindow) {
+    public void processElement(DoFn<String, Long>.ProcessContext context, BoundedWindow boundedWindow) {
         String processedContent = context.element();
-        assert processedContent != null;
-        for (String processedText : processedContent.split(" ")) {
-
-        }
+        Map<String, Long> map = Arrays.stream(processedContent.split(" ")).collect(Collectors.groupingBy(s -> s, Collectors.counting()));
+        context.output(OUTPUT_SUCCESS_TAG, map);
     }
 
 }

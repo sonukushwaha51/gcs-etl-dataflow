@@ -1,7 +1,10 @@
 package com.gcp.labs.gcsetldataflow;
 
 import com.gcp.labs.gcsetldataflow.options.GCSDataflowPipelineOptions;
+import com.gcp.labs.gcsetldataflow.singleton.CsvService;
+import com.gcp.labs.gcsetldataflow.singleton.OutputFormat;
 import com.gcp.labs.gcsetldataflow.transforms.CountElementsDoFn;
+import com.gcp.labs.gcsetldataflow.transforms.CsvTransformDoFn;
 import com.gcp.labs.gcsetldataflow.transforms.RemoveWhiteSpaceDoFn;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -15,8 +18,10 @@ import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.TupleTagList;
 
-import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.FAILURE_TAG;
-import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.SUCCESS_TAG;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.*;
 
 public class Dataflow {
 
@@ -44,16 +49,20 @@ public class Dataflow {
         PCollection<String> removeWhiteSpaceFailure = tuple.get(FAILURE_TAG);
 
         PCollectionTuple countProcessTuple = removeWhiteSpaceSuccess
-                .apply("Count element", ParDo.of(injector.getInstance(CountElementsDoFn.class)).withOutputTags(SUCCESS_TAG, TupleTagList.of(FAILURE_TAG)));
+                .apply("Count element", ParDo.of(injector.getInstance(CountElementsDoFn.class)).withOutputTags(OUTPUT_SUCCESS_TAG, TupleTagList.of(FAILURE_TAG)));
 
-        countProcessTuple.get(SUCCESS_TAG)
-                .apply("Write to GCS", TextIO.write().to(outputGcsBucketSuccess));
+        countProcessTuple.get(OUTPUT_SUCCESS_TAG)
+                .apply("Apply Csv transform", ParDo.of(injector.getInstance(CsvTransformDoFn.class)))
+                .apply("Write to GCS", TextIO.write().to(outputGcsBucketSuccess + "word-count-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
+                        .withNumShards(1)
+                        .withSuffix(".csv")
+                        .withHeader(injector.getInstance(CsvService.class).getCsvHeader(OutputFormat.class)));
 
         PCollection<String> failureProcess = PCollectionList.of(removeWhiteSpaceFailure).and(countProcessTuple.get(FAILURE_TAG))
-                        .apply("FLatten error", Flatten.pCollections());
+                        .apply("Flatten error", Flatten.pCollections());
 
         failureProcess
-                .apply("Write to failure folder", TextIO.write().to(outputGcsBucketFailure));
+                .apply("Write to failure folder", TextIO.write().to(outputGcsBucketFailure + "word-count-error-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))));
 
         pipeline.run();
     }

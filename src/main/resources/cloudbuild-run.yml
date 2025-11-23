@@ -17,10 +17,14 @@ steps:
         apk add --no-cache jq
         jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|join(",")' /workspace/pipeline-options.json > /workspace/parameters.txt
 
-  - name: Get Project version
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'Get Project Version'
+    entrypoint: 'bash'
     args:
-      |
-      echo "VERSION=VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> /workspace/version.txt
+      - '-c'
+      - |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo $VERSION > /workspace/version.txt
 
   - name: google/cloud-sdk:alpine
     entrypoint: 'bash'

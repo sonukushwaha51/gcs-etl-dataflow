@@ -1,15 +1,13 @@
 steps:
-  - name: Setup Java
-    uses: actions/setup-java@v4
-    with:
-      java-version: "17"
-      distribution: "temurin"
-      cache: maven
-
-  - name: Get Project version
+  - name: 'gcr.io/cloud-builders/mvn'
+    id: 'Get Project Version'
+    entrypoint: 'bash'
     args:
-      |
-      echo "VERSION=VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> /workspace/version.txt
+      - '-c'
+      - |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo $VERSION > /workspace/version.txt
+
 
 
   - name: 'gcr.io/cloud-builders/docker'

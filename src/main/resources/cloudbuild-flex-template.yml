@@ -6,7 +6,7 @@ steps:
     args:
       - '-c'
       - |
-        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        _VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo $VERSION > /workspace/versions.txt
 
   # Step 2: Build latest image
@@ -25,8 +25,8 @@ steps:
     args:
       - '-c'
       - |
-        VERSION=$(cat /workspace/versions.txt)
-        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION} .
+        _VERSION=$(cat /workspace/versions.txt)
+        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${_VERSION} .
 
   # Step 4: Push latest image
   - name: 'gcr.io/cloud-builders/docker'
@@ -44,8 +44,8 @@ steps:
     args:
       - '-c'
       - |
-        VERSION=$(cat /workspace/versions.txt)
-        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION}
+        _VERSION=$(cat /workspace/versions.txt)
+        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${_VERSION}
 
   # Step 6: Build flex template for latest
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -65,9 +65,9 @@ steps:
     args:
       - '-c'
       - |
-        VERSION=$(cat /workspace/versions.txt)
-        gcloud dataflow flex-template build gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-${VERSION}.json \
-          --image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${VERSION} \
+        _VERSION=$(cat /workspace/versions.txt)
+        gcloud dataflow flex-template build gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-${_VERSION}.json \
+          --image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${_VERSION} \
           --sdk-language=JAVA
 
   # Step 8: Upload pipeline options

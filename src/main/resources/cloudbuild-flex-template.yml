@@ -6,9 +6,7 @@ steps:
     args:
       - '-c'
       - |
-        _IMAGE_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-        echo "Project version=${_IMAGE_VERSION}"
-        echo "${_IMAGE_VERSION}" > /workspace/version.txt
+        mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout > version.txt
 
 
   # Step 2: Build latest image
@@ -27,8 +25,7 @@ steps:
     args:
       - '-c'
       - |
-        _IMAGE_VERSION=$(cat /workspace/version.txt)
-        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${_IMAGE_VERSION} .
+        docker build -t us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$(cat /workspace/version.txt) .
 
   # Step 4: Push latest image
   - name: 'gcr.io/cloud-builders/docker'
@@ -45,9 +42,8 @@ steps:
     entrypoint: 'bash'
     args:
       - '-c'
-      - |
-        _IMAGE_VERSION=$(cat /workspace/version.txt)
-        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${_IMAGE_VERSION}
+      - |+
+        docker push us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$(cat /workspace/version.txt)
 
   # Step 6: Build flex template for latest
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -68,8 +64,8 @@ steps:
       - '-c'
       - |
         _IMAGE_VERSION=$(cat /workspace/version.txt)
-        gcloud dataflow flex-template build gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-${_IMAGE_VERSION}.json \
-          --image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:${_IMAGE_VERSION} \
+        gcloud dataflow flex-template build gs://dataflow-bucket-quickstart/flex-template/gcs-etl-dataflow-flex-template-$(cat /workspace/version.txt).json \
+          --image=us-central1-docker.pkg.dev/eighth-saga-474816-a6/dataflow-docker-artifactory/gcs-etl-dataflow:$(cat /workspace/version.txt) \
           --sdk-language=JAVA
 
   # Step 8: Upload pipeline options

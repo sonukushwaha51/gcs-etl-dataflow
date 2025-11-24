@@ -78,6 +78,6 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-#
-#substitutions:
-#  _IMAGE_VERSION: '$(tail -n 1 version.txt)'
+
+substitutions:
+ _IMAGE_VERSION: '$(tail -n 1 version.txt)'

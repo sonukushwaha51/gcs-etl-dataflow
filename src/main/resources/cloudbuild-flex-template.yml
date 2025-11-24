@@ -6,9 +6,9 @@ steps:
     args:
       - '-c'
       - |
-        VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-        echo "Project version=${VERSION}"
-        echo "${VERSION}" > /workspace/version.txt
+        _IMAGE_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+        echo "Project version=${_IMAGE_VERSION}"
+        echo "${_IMAGE_VERSION}" > /workspace/version.txt
 
 
   # Step 2: Build latest image

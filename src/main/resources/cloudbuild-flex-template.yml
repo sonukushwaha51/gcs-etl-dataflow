@@ -6,7 +6,7 @@ steps:
     args:
       - '-c'
       - |
-        mvn help:evaluate -Dexpression=project.version -q -DforceStdout > /workspace/version.txt
+        mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout > /workspace/version.txt
         _IMAGE_VERSION=$(cat /workspace/version.txt)
         echo "Project version=${_IMAGE_VERSION}"
 

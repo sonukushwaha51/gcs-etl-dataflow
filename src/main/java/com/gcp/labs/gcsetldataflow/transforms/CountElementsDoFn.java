@@ -12,7 +12,7 @@ import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.OUTPUT_SUCCE
 public class CountElementsDoFn extends DoFn<String, Map<String, Long>> {
 
     @ProcessElement
-    public void processElement(DoFn<String, Long>.ProcessContext context, BoundedWindow boundedWindow) {
+    public void processElement(DoFn<String, Map<String, Long>>.ProcessContext context, BoundedWindow boundedWindow) {
         String processedContent = context.element();
         Map<String, Long> map = Arrays.stream(processedContent.split(" ")).collect(Collectors.groupingBy(s -> s, Collectors.counting()));
         context.output(OUTPUT_SUCCESS_TAG, map);

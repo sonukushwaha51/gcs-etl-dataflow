@@ -6,9 +6,10 @@ steps:
     args:
       - '-c'
       - |
-        mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout > /workspace/version.txt
-        _IMAGE_VERSION=$(cat /workspace/version.txt)
-        echo "Project version=${_IMAGE_VERSION}"
+        VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+        echo "Project version=${VERSION}"
+        echo "${VERSION}" > /workspace/version.txt
+
 
   # Step 2: Build latest image
   - name: 'gcr.io/cloud-builders/docker'

@@ -6,10 +6,13 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.gcp.labs.gcsetldataflow.singleton.supplier.CsvMapperSingletonResource;
 import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CsvService {
+@Slf4j
+public class CsvService implements Serializable {
 
     private final CsvMapperSingletonResource csvMapperSingletonResource;
 
@@ -41,6 +44,7 @@ public class CsvService {
         try {
             return csvMapper.writer(schema).writeValueAsString(null);
         } catch (JsonProcessingException e) {
+            log.error("Exception occurred while writing header", e);
             throw new RuntimeException(e);
         }
     }
@@ -50,6 +54,7 @@ public class CsvService {
         try {
             return objectWriter.writeValueAsString(object);
         } catch (JsonProcessingException e) {
+            log.error("Exception occurred while writing", e);
             throw new RuntimeException(e);
         }
     }

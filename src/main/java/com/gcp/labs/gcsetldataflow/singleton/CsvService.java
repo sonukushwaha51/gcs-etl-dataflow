@@ -6,13 +6,15 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.gcp.labs.gcsetldataflow.singleton.supplier.CsvMapperSingletonResource;
 import com.google.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 public class CsvService implements Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvService.class);
 
     private final CsvMapperSingletonResource csvMapperSingletonResource;
 
@@ -25,7 +27,7 @@ public class CsvService implements Serializable {
     }
 
     public ObjectWriter getCsvWriter(Class<?> classType) {
-        if (!csvWriterMap.containsKey(classType)) {
+        if (csvWriterMap.containsKey(classType)) {
             return csvWriterMap.get(classType);
         } else {
             synchronized (this) {
@@ -44,7 +46,7 @@ public class CsvService implements Serializable {
         try {
             return csvMapper.writer(schema).writeValueAsString(null);
         } catch (JsonProcessingException e) {
-            log.error("Exception occurred while writing header", e);
+            LOGGER.error("Exception occurred while writing header", e);
             throw new RuntimeException(e);
         }
     }
@@ -54,7 +56,7 @@ public class CsvService implements Serializable {
         try {
             return objectWriter.writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            log.error("Exception occurred while writing", e);
+            LOGGER.error("Exception occurred while writing", e);
             throw new RuntimeException(e);
         }
     }

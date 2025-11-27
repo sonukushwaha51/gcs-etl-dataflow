@@ -1,13 +1,14 @@
 package com.gcp.labs.gcsetldataflow.transforms;
 
 import com.gcp.labs.gcsetldataflow.singleton.CsvService;
+import com.gcp.labs.gcsetldataflow.singleton.OutputFormat;
 import com.google.inject.Inject;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 
 import java.util.Map;
 
-public class CsvTransformDoFn extends DoFn<Map<String, Long>, String> {
+public class CsvTransformDoFn extends DoFn<OutputFormat, String> {
 
     private final CsvService csvService;
 
@@ -17,8 +18,8 @@ public class CsvTransformDoFn extends DoFn<Map<String, Long>, String> {
     }
 
     @ProcessElement
-    public void processElement(DoFn<Map<String, Long>, String>.ProcessContext context, BoundedWindow boundedWindow) {
-        Map<String, Long> outputFormat = context.element();
+    public void processElement(DoFn<OutputFormat, String>.ProcessContext context, BoundedWindow boundedWindow) {
+        OutputFormat outputFormat = context.element();
         assert outputFormat != null;
         context.output(csvService.writeToCsv(outputFormat));
     }

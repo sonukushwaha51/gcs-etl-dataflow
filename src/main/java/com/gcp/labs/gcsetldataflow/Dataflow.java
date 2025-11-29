@@ -3,19 +3,18 @@ package com.gcp.labs.gcsetldataflow;
 import com.gcp.labs.gcsetldataflow.options.GCSDataflowPipelineOptions;
 import com.gcp.labs.gcsetldataflow.singleton.CsvService;
 import com.gcp.labs.gcsetldataflow.singleton.OutputFormat;
-import com.gcp.labs.gcsetldataflow.transforms.ConvertToOutputFormatDoFn;
-import com.gcp.labs.gcsetldataflow.transforms.CsvTransformDoFn;
-import com.gcp.labs.gcsetldataflow.transforms.RemoveWhiteSpaceDoFn;
+import com.gcp.labs.gcsetldataflow.transforms.*;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
+import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.transforms.Count;
-import org.apache.beam.sdk.transforms.Flatten;
-import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.values.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,11 +39,19 @@ public class Dataflow {
 
         // Add your pipeline transformations here using inputGcsBucket and outputGcsBucket
 
-        PCollection<String> pCollection = pipeline
-                .apply("Read from GCS", TextIO.read().from(inputGcsBucket));
+//        PCollection<String> pCollection = pipeline
+//                .apply("Read from GCS", TextIO.read().from(inputGcsBucket));
 
-        PCollectionTuple tuple = pCollection
-                .apply("Process Text Data", ParDo.of(injector.getInstance(RemoveWhiteSpaceDoFn.class)).withOutputTags(SUCCESS_TAG, TupleTagList.of(FAILURE_TAG)));
+        PCollectionTuple readFileTuple = pipeline.apply("Match files from GCS", FileIO.match().filepattern(inputGcsBucket))
+                .apply("Read all fileds with Metadata", FileIO.readMatches())
+                .apply("Extract file path", ParDo.of(injector.getInstance(ExtractFilePathDoFn.class))
+                        .withOutputTags(SUCCESS_TAG, TupleTagList.of(FILE_PATH_TAG)));
+
+
+        PCollectionTuple tuple = readFileTuple.get(SUCCESS_TAG)
+                .setCoder(StringUtf8Coder.of())
+                .apply("Process Text Data", ParDo.of(injector.getInstance(RemoveWhiteSpaceDoFn.class))
+                        .withOutputTags(SUCCESS_TAG, TupleTagList.of(FAILURE_TAG)));
 
         PCollection<String> removeWhiteSpaceSuccess = tuple.get(SUCCESS_TAG);
         PCollection<String> removeWhiteSpaceFailure = tuple.get(FAILURE_TAG);
@@ -57,16 +64,24 @@ public class Dataflow {
 
         convertToOutputFormatTuple.get(OUTPUT_SUCCESS_TAG)
                 .apply("Apply Csv transform", ParDo.of(injector.getInstance(CsvTransformDoFn.class)))
-                .apply("Write to GCS", TextIO.write().to(outputGcsBucketSuccess + "word-count-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
-                        .withNumShards(1)
+                .apply("Write to GCS", TextIO.write()
+                        .to(outputGcsBucketSuccess + "word-count-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
+                        .withoutSharding()
                         .withSuffix(".csv")
                         .withHeader(injector.getInstance(CsvService.class).getCsvHeader(OutputFormat.class)));
 
+        readFileTuple.get(FILE_PATH_TAG)
+                .setCoder(StringUtf8Coder.of())
+                .apply("Read file path", Distinct.create())
+                .apply("Move file to processed", ParDo.of(injector.getInstance(MoveFilesToProcessedDoFn.class)));
+
         PCollection<String> failureProcess = PCollectionList.of(removeWhiteSpaceFailure).and(convertToOutputFormatTuple.get(FAILURE_TAG))
                         .apply("Flatten error", Flatten.pCollections());
-
         failureProcess
-                .apply("Write to failure folder", TextIO.write().to(outputGcsBucketFailure + "word-count-error-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))));
+                .apply("Check if failure exists", Filter.by(StringUtils::isNotBlank))
+                .apply("Write to failure folder", TextIO.write()
+                        .to(outputGcsBucketFailure + "word-count-error-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
+                        .withoutSharding());
 
         pipeline.run();
     }

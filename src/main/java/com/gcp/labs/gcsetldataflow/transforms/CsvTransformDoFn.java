@@ -6,8 +6,6 @@ import com.google.inject.Inject;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 
-import java.util.Map;
-
 public class CsvTransformDoFn extends DoFn<OutputFormat, String> {
 
     private final CsvService csvService;

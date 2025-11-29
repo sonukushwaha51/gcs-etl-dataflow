@@ -18,7 +18,6 @@ public class ConvertToOutputFormatDoFn extends DoFn<KV<String, Long>, OutputForm
 
     @ProcessElement
     public void processElement(DoFn<KV<String, Long>, OutputFormat>.ProcessContext context, BoundedWindow boundedWindow) {
-        LOGGER.info("Starting element count");
         try {
             KV<String, Long> processedContent = context.element();
             OutputFormat outputFormat = new OutputFormat();

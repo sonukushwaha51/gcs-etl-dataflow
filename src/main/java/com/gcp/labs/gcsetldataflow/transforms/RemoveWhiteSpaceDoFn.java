@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.FAILURE_TAG;
 import static com.gcp.labs.gcsetldataflow.tags.GcsDataflowTupleTags.SUCCESS_TAG;
@@ -25,8 +24,10 @@ public class RemoveWhiteSpaceDoFn extends DoFn<String, String> {
         String failureMessage = "Empty Text was passed";
         if (textContent != null && !textContent.isEmpty()) {
             try {
-                String[] normalizedArray = (String[]) Arrays.stream(textContent.split(" "))
-                        .filter(text -> !NORMALIZE_TEXTS.contains(text.toLowerCase())).toArray(String[]::new);
+                String[] normalizedArray = Arrays.stream(textContent.split(" "))
+                        .filter(text -> !NORMALIZE_TEXTS.contains(text.toLowerCase()))
+                        .map(text -> text.replaceAll("\\W",""))
+                        .toArray(String[]::new);
                 for (String normalizedText : normalizedArray) {
                     context.output(SUCCESS_TAG, normalizedText);
                 }

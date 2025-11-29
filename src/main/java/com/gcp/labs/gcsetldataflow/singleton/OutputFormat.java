@@ -1,20 +1,34 @@
 package com.gcp.labs.gcsetldataflow.singleton;
 
-import lombok.Data;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
-
-import java.util.List;
-
-@Data
 public class OutputFormat {
+
+    public OutputFormat() {
+    }
 
     private String name;
 
-    private long count;
+    private Long count;
 
-    public static final Schema SCHEMA = SchemaBuilder.record("OutputEvent")
-            .namespace("com.gcp.labs.gsetldataflow.singleton.outputformat")
+    public String getName() {
+        return name;
+    }
+
+    public Long getCount() {
+        return count;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setCount(Long count) {
+        this.count = count;
+    }
+
+    public static final Schema SCHEMA = SchemaBuilder.record(OutputFormat.class.getSimpleName())
+            .namespace(OutputFormat.class.getPackageName())
             .fields()
             .name("name").type().stringType().noDefault()
             .name("count").type().longType().longDefault(0)

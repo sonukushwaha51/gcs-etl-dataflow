@@ -11,6 +11,7 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.values.*;
@@ -42,8 +43,11 @@ public class Dataflow {
 //        PCollection<String> pCollection = pipeline
 //                .apply("Read from GCS", TextIO.read().from(inputGcsBucket));
 
-        PCollectionTuple readFileTuple = pipeline.apply("Match files from GCS", FileIO.match().filepattern(inputGcsBucket))
+        PCollectionTuple readFileTuple = pipeline.apply("Match files from GCS", FileIO.match().filepattern(inputGcsBucket)
+                        .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW))
                 .apply("Read all fileds with Metadata", FileIO.readMatches())
+                .apply("Exclude Processed Folder", Filter.by((FileIO.ReadableFile file) ->
+                                !file.getMetadata().resourceId().toString().contains("/processed/")))
                 .apply("Extract file path", ParDo.of(injector.getInstance(ExtractFilePathDoFn.class))
                         .withOutputTags(SUCCESS_TAG, TupleTagList.of(FILE_PATH_TAG)));
 

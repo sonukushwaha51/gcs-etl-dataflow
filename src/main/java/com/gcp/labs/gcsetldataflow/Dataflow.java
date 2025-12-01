@@ -72,7 +72,8 @@ public class Dataflow {
                         .to(outputGcsBucketSuccess + "word-count-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
                         .withoutSharding()
                         .withSuffix(".csv")
-                        .withHeader(injector.getInstance(CsvService.class).getCsvHeader(OutputFormat.class)));
+                        .withHeader(injector.getInstance(CsvService.class).getCsvHeader(OutputFormat.class))
+                        .withOutputFilenames().skipIfEmpty());
 
         readFileTuple.get(FILE_PATH_TAG)
                 .setCoder(StringUtf8Coder.of())
@@ -85,7 +86,7 @@ public class Dataflow {
                 .apply("Check if failure exists", Filter.by(StringUtils::isNotBlank))
                 .apply("Write to failure folder", TextIO.write()
                         .to(outputGcsBucketFailure + "word-count-error-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
-                        .withoutSharding());
+                        .withoutSharding().withOutputFilenames().skipIfEmpty());
 
         pipeline.run();
     }
